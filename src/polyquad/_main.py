@@ -1,7 +1,7 @@
 import numpy as np
 
 from ._mapping import map_to_local_bb
-from ._antonietti import integrate_monomials_polyhedron
+from ._antonietti import integrateMonomialsPolyhedron
 from ._moment_matching import moment_matching
 
 def get_quadrature(order:int,
@@ -11,7 +11,7 @@ def get_quadrature(order:int,
     # perform matrix transfomation to fit in the local bounding box = [-1, 1]^3
     verts, jacobian = map_to_local_bb(vertices)
     # call antonietti's algorithm
-    integrated_monomials = integrate_monomials_polyhedron(verts, faces, [order]*3, True)
+    integrated_monomials = integrateMonomialsPolyhedron(order, faces, verts)
     # perform moment matching
     if get_residual:
         points, weights, resiadual = moment_matching(order, integrated_monomials, residual = True)

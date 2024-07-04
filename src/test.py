@@ -12,6 +12,16 @@ if __name__=='__main__':
     vertices +=3
     faces = geo['faces']
 
-    order = 10
-
+    order = 18
     p, w, r = polyquad.get_quadrature(order, vertices, faces, get_residual = True)
+    p, w = polyquad.get_quadrature(order, vertices, faces, get_residual = False)
+
+    ntests = 10
+    t1 = time.perf_counter()
+    for _ in range(ntests):
+        p, w = polyquad.get_quadrature(order, vertices, faces, get_residual = False)
+    t2 = time.perf_counter()
+    print(f'elasped time {(t2-t1)/ntests}s')
+    
+    v2,j = polyquad.map_to_local_bb(vertices)
+    I = polyquad.integrateMonomialsPolyhedron(10,faces,v2)

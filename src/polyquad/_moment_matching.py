@@ -19,7 +19,11 @@ def mkDecomposition(order: int):
     xpow,ypow,zpow = trios(order)
     vt = x**xpow * y**ypow * z**zpow
     q,r,p = sp.linalg.qr(vt, mode = 'economic', pivoting = True)
-    QRPV[order] = [q,r,p,vt.T,np.hstack((x.T,y.T,z.T))]
+    M,N = r.shape
+    RinvQt = np.linalg.inv(r[:M,:M]) @ q.T
+    pts = np.hstack((x.T,y.T,z.T))
+    pts = pts[:M,:]
+    QRPV[order] = [RinvQt, p, vt.T, pts]
 
 def trios(order: int) -> (np.ndarray):
     """combination of powers of monomials for a polynomial of a given order with complete basis
@@ -44,12 +48,12 @@ def trios(order: int) -> (np.ndarray):
     xPow, yPow, zPow = v1[mask], v2[mask], v3[mask]
     return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1)),zPow.reshape((zPow.size,1))
 
-def reshape_monomials(mono,order):
-    xp, yp, zp = trios(order)
-    m = np.zeros((len(xp),1),dtype = 'float')
-    for ii in range(len(xp)):
-        m[ii,0] = mono[xp[ii],yp[ii],zp[ii]]
-    return m
+# def reshape_monomials(mono,order):
+#     xp, yp, zp = trios(order)
+#     m = np.zeros((len(xp),1),dtype = 'float')
+#     for ii in range(len(xp)):
+#         m[ii,0] = mono[xp[ii],yp[ii],zp[ii]]
+#     return m
 
 def moment_matching(order: int,
                     mono: np.ndarray,
@@ -75,17 +79,16 @@ def moment_matching(order: int,
       quality indicator of the quadrature, see equation 16
     """
     if not(order in QRPV.keys()):
+        print('decomposing')
         mkDecomposition(order)
     #extract decomposition
-    q,r,p,v,pts = QRPV[order]
-    M,N = r.shape
-    m = reshape_monomials(mono, order)
-    y = np.linalg.solve(r[:M,:M], q.T @ m)
-    #x = np.zeros((N,1), dtype = 'float')
-    #x[p[:M]] = y
+    RinvQt,p,v,pts = QRPV[order]
+    N,M = v.shape
+    m = mono
+    y = RinvQt @ mono
     if residual:
-        x = np.zeros((N,1), dtype = 'float')
+        x = np.zeros(N, dtype = 'float')
         x[p[:M]] = y
         res = np.linalg.norm(v.T @ x - m,2)
-        return pts[p[:M],:], y, res
-    return pts[p[:M],:],y
+        return pts, y, res
+    return pts,y

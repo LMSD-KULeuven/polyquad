@@ -43,8 +43,8 @@ Developped by christophe and thijs
 """
 
 from ._mapping import map_to_local_bb
-from ._antonietti import integrate_monomials_polyhedron
+from ._antonietti import integrateMonomialsPolygon, integrateMonomialsPolyhedron
 from ._moment_matching import moment_matching
 from ._main import get_quadrature
 
-__all__ = ['map_to_local_bb', 'moment_matching', 'integrate_monomials_polyhedron', 'get_quadrature']
+__all__ = ['map_to_local_bb', 'moment_matching', 'integrateMonomialsPolygon', 'integrateMonomialsPolyhedron', 'get_quadrature']

@@ -1,189 +1,438 @@
 """
-Implementation of Antonietti's algorithm 2
+Implementation of Paola Antonietti's algorithm 2
 https://doi.org/10.1007/s10915-018-0802-y
 
-Hats off to Thijs van Putten for coding this
+Hats off to Thijs van Putten for this.
 """
+
 import numpy as np
-from math import sqrt
-from numba import jit
+import numba
 
-def integrate_monomials_polyhedron(node_coords, elem_faces, orders, restrict_complete):
-    """
-    Integrate all monomials up to specified orders (3 orders in u,v,w) over a polyhedron
-    in parametrized u,v,w space (range -1 to 1).
-    Polyhedron is defined by node coordinates, and faces specified as a 2D array of indices into node_coords
-    If restrict complete is set; restrict monomials to complete basis only
-    """
-    node_monomials = evaluate_monomials(node_coords, orders, restrict_complete)
-    num_subgeom, center, euclid_dist, index_offset, node_indices = hierarchical_geometry_polyhedron(node_coords, elem_faces)
-    return integrate_monomials_recursive(3, 0, orders, restrict_complete, num_subgeom, center, euclid_dist, index_offset, node_indices, node_monomials)
+from ._utils import getFaceNormal
 
-def integrate_monomials_triangle(node_coords, orders, restrict_complete):
-    """
-    Integrate all monomials up to specified orders (3 orders in u,v,w) over a triangle
-    in parametrized u,v,w space (range -1 to 1).
-    Triangle is defined by 3 sets of node coordinates
-    If restrict complete is set; restrict monomials to complete basis only
-    """
-    node_monomials = evaluate_monomials(node_coords, orders, restrict_complete)
-    num_subgeom, center, euclid_dist, index_offset, node_indices = hierarchical_geometry_triangle(node_coords)
-    result = integrate_monomials_recursive(2, 0, orders, restrict_complete, num_subgeom, center, euclid_dist, index_offset, node_indices, node_monomials)
-    return result
+@numba.jit(nopython = True, cache = True, nogil = True)
+def getFaceCenter(verts: np.ndarray) -> np.ndarray:
+    """computes the barycenter of vertices
 
-def integrate_monomials_mesh(vertices, faces, orders, restrict_complete):
-    """
-    Integrate all monomials up to specified orders (3 orders in u,v,w) over a triangle mesh
-    in parametrized u,v,w space (range -1 to 1).
-    Each triangle is defined by a face which specifies 3 vertices
-    If restrict complete is set; restrict monomials to complete basis only
-    """
-    vertex_monomials = evaluate_monomials(vertices, orders, restrict_complete) 
-    result = np.zeros((len(faces), orders[0]+1, orders[1]+1, orders[2]+1))
-    for iface in range(len(faces)):
-        node_monomials = vertex_monomials[faces[iface],:,:,:]
-        num_subgeom, center, euclid_dist, index_offset, node_indices = hierarchical_geometry_triangle(vertices[faces[iface]])
-        result[iface] = integrate_monomials_recursive(2, 0, orders, restrict_complete, num_subgeom, center, euclid_dist, index_offset, node_indices, node_monomials)
-    return result
+    Could be done with a simple mean, but unavailable in numba
 
-@jit(nopython=True, cache=True, nogil=True)
-def evaluate_monomials(points, orders, restrict_complete):
+    Parameters
+    ----------
+    verts : np.ndarray
+        coordinates of vertices comprising the face, shape = (*, 3)
+
+    Returns
+    -------
+    np.ndarray
+        center of the face, shape = (3,)
+
     """
-    evaluate all monomials up to supplied orders in u,v,w at supplied points
-    If restrict complete is set; restrict monomials to complete basis only
+    #mean unavailable in numba
+    nverts = verts.shape[0]
+    center = np.array((0., 0., 0.), dtype = 'float')
+    center[0] = np.sum(verts[:,0])/nverts
+    center[1] = np.sum(verts[:,1])/nverts
+    center[2] = np.sum(verts[:,2])/nverts
+    return center
+
+#to avoid calling special scipy (binom) functions within numba
+@numba.jit(nopython = True, cache = True, nogil = True)
+def numberOfMonomials(dim:int,
+                      order:int) -> int:
+    """computes the number of monomials comprising the complete polynomial space of order order
+
+    can be done with a simple scipy.special.binom(order + dim, dim)
+    but unavailable from numba
+
+    Parameters
+    ----------
+    dim : int
+        dimension, number of variable comprising the polynomial space
+    order : int
+        poylnomial order
+
+    Returns
+    -------
+    int
+        number of monomials
     """
-    out = np.zeros((points.shape[0], orders[0]+1, orders[1]+1, orders[2]+1))
-    for i in range(orders[0]+1):
-        j_max = orders[1]-restrict_complete*i
-        for j in range(j_max+1):
-            k_max = orders[2]-restrict_complete*(i+j)
-            for k in range(k_max+1):
-                out[:,i,j,k] = points[:,0]**i * points[:,1]**j * points[:,2]**k
+    if dim == 2:
+        number = int( (order+2)*(order+1)/2 )
+    elif dim ==3:
+        number = int( (order+3)*(order+2)*(order+1)/6 )
+    return number
+
+@numba.jit(nopython=True, cache=True, nogil=True)
+def evaluateMonomials(dim: int,
+                      order: int,
+                      verts: np.ndarray) -> np.ndarray:
+    """evaluates all monomials comprising the complete polynomial space at vertices
+
+    Parameters
+    ----------
+    dim : int
+        dimension
+    order : int
+        polynomial order
+    verts : np.ndarray
+        coordiantes of vertices, shape (*, 3)
+
+    Returns
+    -------
+    np.ndarray
+        monomials evaluated at verts, shape (number of verts, number
+        of monomials)
+
+    """
+    out = np.zeros((verts.shape[0],numberOfMonomials(dim, order)), dtype = 'float')
+    restrict_complete = True
+    ii = 0
+    if dim == 2:
+        for i in range(order+1):
+            j_max = order-restrict_complete*i
+            for j in range(j_max+1):
+                out[:,ii] = verts[:,0]**i * verts[:,1]**j
+                ii+=1
+    else:
+        for i in range(order+1):
+            j_max = order-restrict_complete*i
+            for j in range(j_max+1):
+                k_max = order-restrict_complete*(i+j)
+                for k in range(k_max+1):
+                    out[:,ii] = verts[:,0]**i * verts[:,1]**j * verts[:,2]**k
+                    ii+=1
     return out
 
-@jit(nopython=True, cache=True, nogil=True)
-def hierarchical_geometry_polyhedron(node_coords, elem_faces):
-    """
-    Construct hierarchical geometry representation of an element defined by nodes node_coords
-    (in paramterized u,v,w coordinates range -1 to 1) and faces elem_faces defined as lists of
-    indices into the nodes
-    """
-    # set number of subgeometries per dimension
-    nfaces = len(elem_faces)
-    num_subgeom = np.array([0,2,3,nfaces], np.int32)
-    # create arrays for center, euclidean distance and node indices
-    center = np.zeros((nfaces + 3*nfaces, 3)) # unneeded for 3D, nfaces coords for 2D, 3*nfaces coords for 1D, unneeded for 0D
-    euclid_dist = np.zeros(nfaces + 3*nfaces + 2*3*nfaces) # unneeded for 3D, nfaces vals for 2D, 3*nfaces vals for 1D, 2*3*nfaces vals for 0D
-    node_indices = np.zeros(2*3*nfaces,np.int32) # 2 nodes per edge, 3 edges per face
-    index_offset = np.array([nfaces + 3*nfaces, nfaces, 0, 0], np.int32) # offset into center and euclid_dist per dimension
-    # loop through the faces
-    for iface, facenodes in enumerate(elem_faces):
-        fill_hierarchical_geometry_triangle(node_coords, iface, facenodes, center, euclid_dist, node_indices, index_offset)
-    return num_subgeom, center, euclid_dist, index_offset, node_indices
 
-@jit(nopython=True, cache=True, nogil=True)
-def hierarchical_geometry_triangle(node_coords):
-    """
-    Construct hierarchical geometry representation of a triangle defined by nodes node_coords
-    (in paramterized u,v,w coordinates range -1 to 1)
-    """
-    # set number of subgeometries per dimension
-    num_subgeom = np.array([0,2,3], np.int32)
-    # create arrays for center, euclidean distance and node indices
-    center = np.zeros((1 + 3, 3)) # 1 coord for 2D, 3 coords for 1D
-    euclid_dist = np.zeros(1 + 3 + 2*3) # 1 val for 2D, 3 vals for 1D, 2*3 vals for 0D
-    node_indices = np.array([0, 1, 1, 2, 2, 0], np.int32) # node inidices of the two nodes per edge
-    index_offset = np.array([4, 1, 0], np.int32) # offset into center and euclid_dist per dimension
-    # for single triangle, iface is 0 and facenodes are just 0,1,2
-    iface = 0
-    facenodes = [0, 1, 2]
-    fill_hierarchical_geometry_triangle(node_coords, iface, facenodes, center, euclid_dist, node_indices, index_offset)
-    return num_subgeom, center, euclid_dist, index_offset, node_indices
+@numba.jit(nopython = True, cache = True, nogil = True)
+def getEdgeGeo(verts: np.ndarray,
+               faceNormal: np.ndarray,
+               faceCenter: np.ndarray) -> (np.ndarray, float, np.ndarray):
+    """computes some geometric quantities associated with the edge
 
-@jit(nopython=True)
-def fill_hierarchical_geometry_triangle(node_coords, iface, tri_nodes, center, euclid_dist, node_indices, index_offset):
+    computes the coordinates of the edge center, the distance from the
+    edge center to the face center, the distance from the edge
+    vertices to the edge center
+
+    Parameters
+    ----------
+    verts : np.ndarray
+        coordinates of vertices
+    faceNormal : np.ndarray
+        face normal, shape = (3,)
+    faceCenter : np.ndarray
+        face center, shape = (3,)
+
+    Returns
+    -------
+    (np.ndarray, float, np.ndarray)
+
+    edgeCenter, shape = (3,)
+    edgeDistance, float
+    vertsDistance, shape = (2,)
     """
-    Fill hierarchical geometry arrays for a triangle with index iface, and nodes tri_nodes referreing to coordinates node_coords,
-    Arrays to be filled are center, euclid_dist and node_indices
+    edgeNormal = np.cross(verts[1,:] - verts[0,:], faceNormal)
+    edgeNormal = edgeNormal/np.sqrt(np.sum(edgeNormal**2))
+
+    edgeCenter = (verts[0,:] + verts[1,:]) / 2
+    edgeDistance = np.dot(edgeCenter - faceCenter, edgeNormal)
+
+    vertsDistance = np.zeros(2, dtype = 'float')
+    vertNormal = verts[0,:] - edgeCenter
+    vertNormal = vertNormal/np.sqrt(np.sum(vertNormal**2))
+    vertsDistance[0] =  vertNormal @ (verts[0,:] - edgeCenter).T
+    vertNormal = verts[1,:] - edgeCenter
+    vertNormal = vertNormal/np.sqrt(np.sum(vertNormal**2))
+    vertsDistance[1] =  vertNormal @ (verts[1,:] - edgeCenter).T
+    return edgeCenter, edgeDistance, vertsDistance
+
+@numba.jit(nopython = True, cache = True, nogil = True)
+def getMonomialIndex(dim:int,
+                     order:int,
+                     i:int,
+                     j:int,
+                     k:int) -> int:
+    """get the index of a given monomial in the integral vector
+
+    the integral is stored in a vector of shape (number of
+    monomials,), this function helps you finding the index monomial
+    x^i*y^j*z^k
+
+    Parameters
+    ----------
+    dim : int
+        dimension
+    order : int
+        polynomial order
+    i : int
+        power of x
+    j : int
+        power of y
+    k : int
+        power of z, k=0 if 2d
+
+    Returns
+    -------
+    int
+       index of the monomial    
     """
-    # properties of the triangle
-    face_center = (node_coords[tri_nodes[0]] + node_coords[tri_nodes[1]] + node_coords[tri_nodes[2]]) / 3
-    face_normal = normalize(np.cross(node_coords[tri_nodes[1]] - node_coords[tri_nodes[0]], node_coords[tri_nodes[2]] - node_coords[tri_nodes[1]]))
-    distance = np.dot(face_center, face_normal)
-    center[index_offset[2] + iface] = face_center
-    euclid_dist[index_offset[2] + iface] = distance
+    if dim == 2:
+        return getMonomialIndex(3, order, 0, i, j)
+    ii = 0
+    while (i>0):
+        ii += (order+2)*(order+1)/2
+        order-=1
+        i-=1
+    while (j>0):
+        ii += order+1
+        order-=1
+        j-=1
+    ii+=k
+    return int(ii)
 
-    # loop through the edges
-    for iedge in range(3):
-        edgenode0 = tri_nodes[iedge]
-        edgenode1 = tri_nodes[iedge+1] if iedge < 2 else tri_nodes[0]
-        edge_center = (node_coords[edgenode0] + node_coords[edgenode1]) / 2
-        edge_normal = normalize(np.cross(node_coords[edgenode1] - node_coords[edgenode0], face_normal))
-        distance = np.dot(edge_center - face_center, edge_normal)
-        edge_index = iface * 3 + iedge
-        center[index_offset[1] + edge_index] = edge_center
-        euclid_dist[index_offset[1] + edge_index] = distance
-        # loop through the nodes
-        for ipoint, node in enumerate([edgenode0, edgenode1]):
-            node_normal = normalize(node_coords[node] - edge_center)
-            distance = np.dot(node_coords[node] - edge_center, node_normal)
-            point_index = edge_index * 2 + ipoint
-            euclid_dist[index_offset[0] + point_index] = distance
-            node_indices[point_index] = node
-
-@jit(nopython=True)
-def normalize(vec):
-    norm = sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
-    return vec/norm
-
-@jit(nopython=True, cache=True, nogil=True)
-def integrate_monomials_recursive(dim, geom_index, orders, restrict_complete, num_subgeom, center, euclid_dist, index_offset, node_indices, node_monomials):
-    """
-    Integrate monomials of given orders (in u,v,w) over a hierarchical geometry structure
-    Evaluation of the monomials at the nodes should be precomputed and given as node_monomials
-    This is algorithm 2 of Antonietti et al
-    Arguments:
-    - dim: dimension of the current geometry
-    - geom_index: index of the current geometry in lists of center & euclidean distance
-    - orders (u,v,w): orders of the monomials being integrated
-    - restrict_complete: restrict monomials to complete basis only
-    - num_subgeom: number of subgeometries per dimension
-    - center: center of each geometry
-    - euclid_dist: euclidean distance of each geometry to the cetner of the parent
-    - index_offset: offset into center and euclid_dist per dimensiont
-    - node_index: index in node_monomials of all 0D geometries (ie: nodes)
-    - node_monomials: values of the monomials precomputed at all nodes
-    """
-    # if this is a node, return the precomputed integral
-    if dim == 0:
-        return node_monomials[node_indices[geom_index]]
-
-    # collect the integrals of the geometry one level lower (ie: if this is an element, get the face integrals)
-    sub_integral = np.zeros((num_subgeom[dim], orders[0]+1, orders[1]+1, orders[2]+1))
-    for isub in range(num_subgeom[dim]):
-        subgeom_index = geom_index * num_subgeom[dim] + isub
-        sub_integral[isub] = integrate_monomials_recursive(dim-1, subgeom_index, orders, restrict_complete, num_subgeom, center, euclid_dist, index_offset, node_indices, node_monomials)
-
-    # combine to the integral of the current geometry
-    integral = np.zeros((orders[0]+1, orders[1]+1, orders[2]+1))
-    for i in range(orders[0]+1):
-        j_max = orders[1]-restrict_complete*i
-        for j in range(j_max+1):
-            k_max = orders[2]-restrict_complete*(i+j)
-            for k in range(k_max+1):
-                # sum up integrals of subgeometry times euclidean distance
-                value = 0
-                for isub in range(num_subgeom[dim]):
-                    subgeom_index = geom_index * num_subgeom[dim] + isub
-                    value += euclid_dist[index_offset[dim-1] + subgeom_index] * sub_integral[isub,i,j,k]
-                # for faces & edges, recursively apply stokes law
-                if dim < 3:
-                    # recursive derivative contributions from u/v/w-monomials
+@numba.jit(nopython = True, cache = True, nogil = True)
+def applyStokes(integral: np.ndarray,
+                dim:int,
+                order: int,
+                edgeCenter: np.ndarray,
+                geomDim: int):
+    if dim == 2:
+        ii = 0
+        for i in range(order+1):
+            for j in range(order+1-i):
+                if i > 0:
+                    integral[ii] += edgeCenter[0] * i * integral[getMonomialIndex(dim, order, i-1,  j, 0)]
+                if j > 0:
+                    integral[ii] += edgeCenter[1] * j * integral[getMonomialIndex(dim, order,  i, j-1, 0)]
+                integral[ii] = integral[ii] / (geomDim+i+j)
+                ii+=1
+    if dim == 3:
+        ii = 0
+        for i in range(order+1):
+            for j in range(order+1-i):
+                for k in range(order + 1 - i - j):
                     if i > 0:
-                        value += center[index_offset[dim] + geom_index][0] * i * integral[i-1,j,k]
+                        integral[ii] += edgeCenter[0] * i * integral[getMonomialIndex(dim, order, i-1,  j,   k)]
                     if j > 0:
-                        value += center[index_offset[dim] + geom_index][1] * j * integral[i,j-1,k]
+                        integral[ii] += edgeCenter[1] * j * integral[getMonomialIndex(dim, order,  i, j-1,   k)]
                     if k > 0:
-                        value += center[index_offset[dim] + geom_index][2] * k * integral[i,j,k-1]
-                integral[i,j,k] = 1 / (dim + i + j + k) * value                
+                        integral[ii] += edgeCenter[2] * k * integral[getMonomialIndex(dim, order,  i,   j, k-1)]
+                    integral[ii] = integral[ii] / (geomDim+i+j+k)
+                    ii+=1
+
+
+@numba.jit(nopython = True, cache = True, nogil = True)
+def integrateMonomialsEdge(dim: float,
+                           order:float,
+                           vertsPair:np.ndarray,
+                           edgeCenter: np.ndarray,
+                           edgeDistance: float,
+                           vertsDistance: np.ndarray,
+                           vertexPairMonomials: np.ndarray) -> np.ndarray:
+    """integrate all monomial of the complete dim-vairate polynomial basis of order order on an edge 
+
+    Parameters
+    ----------
+    dim : float
+        dimension
+    order : float
+        polynomial order
+    vertsPair : np.ndarray
+        coordinates of vertices of the edge, shape (2,3)
+    edgeCenter : np.ndarray
+        coordinates of the center of the edge, shape (3,)
+    edgeDistance : float
+        distance from the edge to the center of the face
+    vertsDistance : np.ndarray
+        distance from vertices to the center of the edge, shape (2,)
+    vertexPairMonomials : np.ndarray
+        monomials evaluated at the vertices pair, shape (2, number of
+        monomials)
+
+    Returns
+    -------
+    np.ndarray
+        integrated monomials vector, shape (number of monomials,)
+
+    """
+    integral  = vertsDistance[0]*vertexPairMonomials[0,:] + vertsDistance[1]*vertexPairMonomials[1,:]
+    applyStokes(integral, dim, order, edgeCenter, 1)
     return integral
+
+@numba.jit(nopython = True, cache = True, nogil = True)
+def integrateMonomialsFace(dim: int,
+                           order:int,
+                           face: np.ndarray,
+                           verts: np.ndarray,
+                           vertexMonomials: np.ndarray) -> (np.ndarray, float):
+    """integrate all monomials of the dim-variate complete polynomial basis or order order on a face
+
+    Parameters
+    ----------
+    dim : int
+        dimension
+    order : int
+        poylnomial order
+    face : np.ndarray
+        vector containing the index of vetices comprising the face,
+        shape (number of edges of the face,)
+    verts : np.ndarray
+        coordintes of vertices of the whole poyltopal domain,
+        shape (number of vertices, 3)
+    vertexMonomials : np.ndarray
+        monomials evaluated at all vertices of the polytopal domain,
+        shape (number of verts, number of monomials)
+
+    Returns
+    -------
+    (np.ndarray, float)
+        integral, shape (number of monomials,)
+
+    """
+    numMono = vertexMonomials.shape[1]
+    numEdges = face.size
+    faceNormal = getFaceNormal(face, verts)
+    faceCenter = getFaceCenter(verts[face,:])
+    if dim == 2:
+        faceDist = 0.
+    if dim == 3:
+        faceDist = np.dot(faceCenter, faceNormal)
+    faceIntegral = np.zeros(numMono, dtype = 'float')
+    for iEdge in range(numEdges):
+        vertsPair = np.zeros((2,3), dtype = 'float')
+        vertsPair[0,:] = verts[face[iEdge],:]
+        vertsPair[1,:] = verts[face[(iEdge + 1) % numEdges],:]
+        vertexPairMono = np.zeros((2,numMono), dtype = 'float')
+        vertexPairMono[0,:] = vertexMonomials[face[iEdge],:]
+        vertexPairMono[1,:] = vertexMonomials[face[(iEdge + 1) % numEdges],:]
+        edgeCenter, edgeDistance, vertsDistance = getEdgeGeo(vertsPair, faceNormal, faceCenter)
+        faceIntegral += edgeDistance * integrateMonomialsEdge(dim, order, vertsPair, edgeCenter, edgeDistance, vertsDistance, vertexPairMono)
+    applyStokes(faceIntegral, dim, order, faceCenter, 2)
+    return faceIntegral, faceDist
+
+def integrateMonomialsPolygon(order: int,
+                              face: np.ndarray,
+                              verts: np.ndarray) -> np.ndarray:
+    """computes the integral of all monomials of the bi-variate poylnomial space of order order on a poylgon
+
+    So far, there is no support for faces with holes, I yet have to come up with an idea to do it efficiently in python, sorry
+    
+    Parameters
+    ----------
+    order : int
+        poylnomial order
+    face : np.ndarray
+        trigonomically orderd list of indeices of vertices comprising
+        the polygon, shape (number of vertices,)
+    verts : np.ndarray
+        coordinates of vertices, shape (number of verts, 3)
+
+    Returns
+    -------
+    np.ndarray
+        integrated monomials, shape (number of monomials,)
+
+    """
+    vertexMonomials = evaluateMonomials(2, order, verts)
+    integral, _ = integrateMonomialsFace(2, order, face, verts, vertexMonomials)
+    return integral
+
+@numba.jit(nopython = True, cache = True, nogil = True)
+def delegate(order,dim,faces,verts,vertexMonomials):
+    integral = np.zeros(int(numberOfMonomials(3, order)), dtype = 'float')
+    # for ii in range(faces.shape[0]):
+    #     face = faces[ii]
+    for face in faces:
+        # print(face)
+        faceIntegral,faceDist = integrateMonomialsFace(3, order,face, verts, vertexMonomials)
+        integral += faceDist * faceIntegral
+
+    ii = 0
+    for i in range(order + 1):
+        for j in range(order + 1 - i):
+            for k in range(order + 1 - i - j):
+                integral[ii] = integral[ii]/(3+i+j+k)
+                ii+=1
+    return integral
+
+def integrateMonomialsPolyhedron(order: int,
+                                 faces: list,
+                                 verts: np.ndarray):
+    """computes the integral of all monomials of the bi-variate poylnomial space of order order on a polyhedron
+
+    Parameters
+    ----------
+    order : int
+        polynomial order
+    faces : list
+        list of face, face contains trigonomically order indices of
+        vertices comprising the face. Can be a list or an np.ndarray,
+        np.ndarray is faster but only works if all faces have the same number of
+        edges
+    verts : np.ndarray
+        coordinates of vertices, shape (number of vertices, 3)
+
+    Returns
+    -------
+    np.ndarray
+        integrated monomials, shape (number of monomials,)
+    """
+    vertexMonomials = evaluateMonomials(3, order, verts)
+    integral = delegate(order, 3, faces, verts, vertexMonomials)
+    return integral
+
+if __name__=='__main__':
+    # test using Paola's article as a reference
+    #power of monomials in table 3
+    monomials = [[5,5],[10,10],[20,20],[40,40],[10,5],[20,5],[40,5],[5,20],[5,40]]
+    
+    #p1 from Paola's article
+    print('Testing on P1')
+    face = np.array((0,1,2))
+    verts = np.array([[-1.,1,-1],[-1,0,1],[0,0,0]]).T
+    ref = [0,0.0111339078,0.0030396808,7.9534562047e-4,0,0,0,-0.005890191,-0.001868889]
+    I = integrateMonomialsPolygon(80, face, verts)
+    for ii,mono in enumerate(monomials):
+        index_mono = getMonomialIndex(2,80,mono[0],mono[1],0)
+        if abs(ref[ii]-I[index_mono])>1e-9:
+            print(f'error too large on monomial {mono}')
+    # #p2
+    # face = np.array((0,1,2,3,4))
+    # verts = np.array([[-2/3.,5/9,1,-5/9,-1],
+    #                   [-.789473684210526,-1,-.052631578947368,1,-.157894736842105],
+    #                   [0,0,0,0,0]]).T
+    # I = integrateMonomialsPolygon(10, face, verts)
+    
+    # i = getMonomialIndex(2, 10, 5, 5, 0)
+    # print(I[i])
+
+    #p3
+    # face = np.arange(0,15)
+    # verts = np.array([[0.4130485221416620,.781696234443715,0],
+    #                   [.0248797976555330,.415324992429711,0],
+    #                   [- 0.0827996918235240,.688810136531751,0],
+    #                   [- 0.5331914227793281,1.000000000000000,0],
+    #                   [- 0.5535736058529990,.580958514816226,0],
+    #                   [- 0.9724329402127670,.734117068746903,0],
+    #                   [- 1.0000000000000000,.238078507228890,0],
+    #                   [- 0.7899861791479200,.012425068086110,0],
+    #                   [- 0.627452906935866,- 0.636532897516109,0],
+    #                   [- 0.452662174765764,- 1.000000000000000,0],
+    #                   [- 0.069106265580153,- 0.289054989277619,0],
+    #                   [0.141448047807069,- 0.464417038155806,0],
+    #                   [1.000000000000000,- 0.245698820584615,0],
+    #                   [0.363704451489016,- 0.134079689960635,0],
+    #                   [0.627086024018283,- 0.110940423607648,0]])
+    # t1 = time.perf_counter()
+    # I = integrateMonomialsPolygon(30, face, verts)
+    # t2 = time.perf_counter()
+    # i = getMonomialIndex(2, 30, 5, 5, 0)
+    # print(f'elapsed time {t2-t1}s')
+    # print(I[i])        
+
+    # t1 = time.perf_counter()
+    # I = integrateMonomialsPolygon(30, face, verts)
+    # t2 = time.perf_counter()
+    # i = getMonomialIndex(2, 30, 5, 5, 0)
+    # print(f'elapsed time {t2-t1}s')
+    # print(I[i])

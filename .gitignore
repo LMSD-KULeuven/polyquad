@@ -1,3 +1,6 @@
 *~
 /__pycache__/
 /src/polyquad/__pycache__/
+/src/polyquad/_oldAnto.py
+/dist/
+/src/polyquad.egg-info/
