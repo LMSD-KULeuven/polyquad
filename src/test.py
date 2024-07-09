@@ -1,27 +1,37 @@
 import time
 
+import numpy as np
 from scipy.io import loadmat
+import matplotlib.pyplot as plt
 
 import polyquad
 
+
 if __name__=='__main__':
-    geometry_file = '../demo/icosphere.mat'
+    geometry_file = '../demo/bunny.mat'
     geo = loadmat(geometry_file)
     vertices = geo['verts']
     vertices[:,0] = vertices[:,0]*2
     vertices +=3
     faces = geo['faces']
 
-    order = 18
-    p, w, r = polyquad.get_quadrature(order, vertices, faces, get_residual = True)
-    p, w = polyquad.get_quadrature(order, vertices, faces, get_residual = False)
+    orders = np.arange(1,15)
+    resList = np.zeros(len(orders))
+    resListInv = np.zeros(len(orders))
+    for ii,order in enumerate(orders):
+        print(f'doing order {order}')
+        p, w, r = polyquad.get_quadrature(order, vertices, faces, get_residual = True)
+        resList[ii] = r
 
+    plt.semilogy(orders, resList, label='solve(a,b)')
+    plt.legend()
+    plt.grid()
+    plt.show()
+    
     ntests = 10
+    order = 14
     t1 = time.perf_counter()
     for _ in range(ntests):
         p, w = polyquad.get_quadrature(order, vertices, faces, get_residual = False)
     t2 = time.perf_counter()
     print(f'elasped time {(t2-t1)/ntests}s')
-    
-    v2,j = polyquad.map_to_local_bb(vertices)
-    I = polyquad.integrateMonomialsPolyhedron(10,faces,v2)

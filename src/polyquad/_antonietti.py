@@ -2,7 +2,7 @@
 Implementation of Paola Antonietti's algorithm 2
 https://doi.org/10.1007/s10915-018-0802-y
 
-Hats off to Thijs van Putten for this.
+Hats off to Thijs van Putten coding it in the first place.
 """
 
 import numpy as np

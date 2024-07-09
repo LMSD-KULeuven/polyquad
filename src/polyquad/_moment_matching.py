@@ -1,29 +1,39 @@
 import numpy as np
 import scipy as sp
 
-QRPV={}
+class VandermondeCollection:
+    def __init__(self):
+        self.order_dict = {}
+    def done(self, order):
+        return order in self.order_dict.keys()
+    def add(self, order):
+        self.order_dict[order] = Vandermonde(order)
 
-def mkDecomposition(order: int):
-    """generates points, conputes the vandermonde matrix, computes QR decomposition and store everything
+class Vandermonde:
+    def __init__(self, order):
+        self.mkVandermonde(order)
+        self.decompose()
+    def mkVandermonde(self, order):
+        jj,_ = sp.special.roots_legendre(order+1)
+        X,Y,Z = np.meshgrid(jj,jj,jj)
+        x,y,z = X.flatten(), Y.flatten(), Z.flatten()
+        x,y,z = x[np.newaxis],y[np.newaxis],z[np.newaxis]
+        xpow,ypow,zpow = trios(order)
+        vt = x**xpow * y**ypow * z**zpow
+        self.matrice = vt
+        self.pts = np.hstack((x.T,y.T,z.T))
+    def decompose(self):
+        q,r,p = sp.linalg.qr(self.matrice, mode = 'economic', pivoting = True)
+        M, _ = self.matrice.shape
+        self.q = q
+        # self.r = r
+        self.p = p
+        # self.r_truncated = r[:M,:M]
+        self.pts_truncated = self.pts[p[:M],:]
+        lu, piv = sp.linalg.lu_factor(r[:M,:M])
+        self.lu, self.piv = lu,piv
 
-    Parameters
-    ----------
-    order : int
-        polynomial order of the integrand
-
-    """
-    jj,_ = sp.special.roots_legendre(order+1)
-    X,Y,Z = np.meshgrid(jj,jj,jj)
-    x,y,z = X.flatten(), Y.flatten(), Z.flatten()
-    x,y,z = x[np.newaxis],y[np.newaxis],z[np.newaxis]
-    xpow,ypow,zpow = trios(order)
-    vt = x**xpow * y**ypow * z**zpow
-    q,r,p = sp.linalg.qr(vt, mode = 'economic', pivoting = True)
-    M,N = r.shape
-    RinvQt = np.linalg.inv(r[:M,:M]) @ q.T
-    pts = np.hstack((x.T,y.T,z.T))
-    pts = pts[:M,:]
-    QRPV[order] = [RinvQt, p, vt.T, pts]
+collec = VandermondeCollection()
 
 def trios(order: int) -> (np.ndarray):
     """combination of powers of monomials for a polynomial of a given order with complete basis
@@ -48,13 +58,6 @@ def trios(order: int) -> (np.ndarray):
     xPow, yPow, zPow = v1[mask], v2[mask], v3[mask]
     return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1)),zPow.reshape((zPow.size,1))
 
-# def reshape_monomials(mono,order):
-#     xp, yp, zp = trios(order)
-#     m = np.zeros((len(xp),1),dtype = 'float')
-#     for ii in range(len(xp)):
-#         m[ii,0] = mono[xp[ii],yp[ii],zp[ii]]
-#     return m
-
 def moment_matching(order: int,
                     mono: np.ndarray,
                     residual = False) -> (np.ndarray,np.ndarray):
@@ -78,17 +81,17 @@ def moment_matching(order: int,
     residual: float
       quality indicator of the quadrature, see equation 16
     """
-    if not(order in QRPV.keys()):
-        print('decomposing')
-        mkDecomposition(order)
-    #extract decomposition
-    RinvQt,p,v,pts = QRPV[order]
-    N,M = v.shape
-    m = mono
-    y = RinvQt @ mono
+    if not(collec.done(order)):
+        collec.add(order)
+
+    lu,piv = collec.order_dict[order].lu, collec.order_dict[order].piv
+    q = collec.order_dict[order].q
+    y = sp.linalg.lu_solve((lu,piv), q.T @ mono)
     if residual:
+        M,N = collec.order_dict[order].matrice.shape
         x = np.zeros(N, dtype = 'float')
+        p = collec.order_dict[order].p
         x[p[:M]] = y
-        res = np.linalg.norm(v.T @ x - m,2)
-        return pts, y, res
-    return pts,y
+        res = np.linalg.norm(collec.order_dict[order].matrice @ x - mono,2)/ np.linalg.norm(mono, 2)
+        return collec.order_dict[order].pts_truncated, y, res
+    return collec.order_dict[order].pts_truncated,y
