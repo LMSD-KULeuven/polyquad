@@ -26,12 +26,9 @@ class Vandermonde:
         q,r,p = sp.linalg.qr(self.matrice, mode = 'economic', pivoting = True)
         M, _ = self.matrice.shape
         self.q = q
-        # self.r = r
         self.p = p
-        # self.r_truncated = r[:M,:M]
+        self.r_truncated = np.asfortranarray(r[:M,:M]) # converting to fortran speeds up the backward substitution step
         self.pts_truncated = self.pts[p[:M],:]
-        lu, piv = sp.linalg.lu_factor(r[:M,:M])
-        self.lu, self.piv = lu,piv
 
 collec = VandermondeCollection()
 
@@ -84,9 +81,10 @@ def moment_matching(order: int,
     if not(collec.done(order)):
         collec.add(order)
 
-    lu,piv = collec.order_dict[order].lu, collec.order_dict[order].piv
+    #lu,piv = collec.order_dict[order].lu, collec.order_dict[order].piv
+    r = collec.order_dict[order].r_truncated
     q = collec.order_dict[order].q
-    y = sp.linalg.lu_solve((lu,piv), q.T @ mono)
+    y,_ = sp.linalg.lapack.dtrtrs(r, q.T @ mono)
     if residual:
         M,N = collec.order_dict[order].matrice.shape
         x = np.zeros(N, dtype = 'float')

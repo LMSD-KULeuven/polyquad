@@ -15,7 +15,7 @@ if __name__=='__main__':
     vertices +=3
     faces = geo['faces']
 
-    orders = np.arange(1,15)
+    orders = np.arange(1,25)
     resList = np.zeros(len(orders))
     resListInv = np.zeros(len(orders))
     for ii,order in enumerate(orders):
@@ -27,11 +27,7 @@ if __name__=='__main__':
     plt.legend()
     plt.grid()
     plt.show()
+
+
+
     
-    ntests = 10
-    order = 14
-    t1 = time.perf_counter()
-    for _ in range(ntests):
-        p, w = polyquad.get_quadrature(order, vertices, faces, get_residual = False)
-    t2 = time.perf_counter()
-    print(f'elasped time {(t2-t1)/ntests}s')
