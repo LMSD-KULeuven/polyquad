@@ -20,7 +20,7 @@ if __name__=='__main__':
     resListInv = np.zeros(len(orders))
     for ii,order in enumerate(orders):
         print(f'doing order {order}')
-        p, w, r = polyquad.get_quadrature(order, vertices, faces, get_residual = True)
+        p, w, r = polyquad.get_quadrature_3d(order, vertices, faces, get_residual = True)
         resList[ii] = r
 
     plt.semilogy(orders, resList, label='solve(a,b)')
