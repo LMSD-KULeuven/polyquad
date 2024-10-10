@@ -7,6 +7,12 @@ name = "polyquad"
 version = "0.1"
 authors = [
   { name="christophe langlois", email="christophe.langlois@kuleuven.be" },
+  { name="thijs van putter"},
+  { name="hadrien beriot"},
+  { name="elke deckers"}
+]
+maintainers = [
+  {name = "christophe langlois", email = "christophe.langlois@kuleuven.be"}
 ]
 description = "Frugal generation of quadrature for polytopal domain"
 readme = "README.md"
@@ -16,7 +22,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+license = {file = "LICENSE"}
+keywords = ["quadrature", "cubature", "integration", "scheme", "polygon", "polyhedron", "polytope", "polytopal", "polytopic"]
 
-# [project.urls]
-# Homepage = "https://github.com/pypa/sampleproject"
+[project.urls]
+Homepage = "https://github.com/LMSD-KULeuven/polyquad"
 # Issues = "https://github.com/pypa/sampleproject/issues"

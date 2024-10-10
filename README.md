@@ -22,7 +22,7 @@ polytopal domains. Important points:
 The package is deployed on pypi, so it can be installed simply using pip
 
 '''
-pip install quadpy
+pip install polyquad
 '''
 
 ## Usage
