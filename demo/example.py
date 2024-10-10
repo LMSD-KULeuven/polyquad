@@ -1,15 +1,15 @@
 """
-In this example we show how to generate quadrature over an icosphere
+In this example we show how to generate quadrature over an polyhedron
 """
 from time import perf_counter
 
-import numpy as np
 from scipy.io import loadmat
 
 import polyquad
 
 if __name__=='__main__':
-    geo = loadmat('icosphere.mat')
+    case = 'icosphere'
+    geo = loadmat(case + '.mat')
     # get the coordinates of vertices
     verts = geo['verts']
     # get the connectivity table
@@ -27,5 +27,5 @@ if __name__=='__main__':
     t2 = perf_counter()
     _,_ = polyquad.get_quadrature_3d(17, verts, faces)
     t3 = perf_counter()
-    print(f"Elapsed time to generate quadrature of order 17 for the icosphere: with computation of QR:\n\t{t2-t1}s")
-    print(f"Elapsed time to generate quadrature of order 17 for the icosphere: reusing the previously computer QR:\n\t{t3-t2}s")
+    print(f"Elapsed time to generate quadrature of order 17 for the {case}: with computation of QR:\n\t{t2-t1}s")
+    print(f"Elapsed time to generate quadrature of order 17 for the {case}: reusing the previously computer QR:\n\t{t3-t2}s")
