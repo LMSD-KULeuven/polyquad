@@ -15,27 +15,24 @@ class Vandermonde:
         self.decompose()
     def mkVandermonde(self, order):
         jj,_ = sp.special.roots_legendre(order+1)
-        X,Y,Z = np.meshgrid(jj,jj,jj)
-        x,y,z = X.flatten(), Y.flatten(), Z.flatten()
-        x,y,z = x[np.newaxis],y[np.newaxis],z[np.newaxis]
-        xpow,ypow,zpow = trios(order)
-        vt = x**xpow * y**ypow * z**zpow
+        X,Y = np.meshgrid(jj,jj)
+        x,y = X.flatten(), Y.flatten()
+        x,y = x[np.newaxis],y[np.newaxis],z[np.newaxis]
+        xpow,ypow = duos(order)
+        vt = x**xpow * y**ypow
         self.matrice = vt
-        self.pts = np.hstack((x.T,y.T,z.T))
+        self.pts = np.hstack((x.T,y.T))
     def decompose(self):
         q,r,p = sp.linalg.qr(self.matrice, mode = 'economic', pivoting = True)
         M, _ = self.matrice.shape
         self.q = q
-        # self.r = r
         self.p = p
-        # self.r_truncated = r[:M,:M]
+        self.r_truncated = np.asfortranarray(r[:M,:M]) # converting to fortran speeds up the backward substitution step
         self.pts_truncated = self.pts[p[:M],:]
-        lu, piv = sp.linalg.lu_factor(r[:M,:M])
-        self.lu, self.piv = lu,piv
 
 collec = VandermondeCollection()
 
-def trios(order: int) -> (np.ndarray):
+def duos(order: int) -> (np.ndarray):
     """combination of powers of monomials for a polynomial of a given order with complete basis
 
     Parameters
@@ -49,14 +46,12 @@ def trios(order: int) -> (np.ndarray):
         powers for x
     yPow np.ndarray
         powers for y
-    zPow np.ndarray
-        powers for z
     """
     jj = np.arange(0,order+1, dtype = 'int32')
-    v1,v2,v3 = np.meshgrid(jj,jj,jj)
-    mask = v1+v2+v3 < order+1
-    xPow, yPow, zPow = v1[mask], v2[mask], v3[mask]
-    return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1)),zPow.reshape((zPow.size,1))
+    v1,v2 = np.meshgrid(jj,jj)
+    mask = v1+v2 < order+1
+    xPow, yPow = v1[mask], v2[mask]
+    return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1))
 
 def moment_matching(order: int,
                     mono: np.ndarray,
@@ -84,9 +79,9 @@ def moment_matching(order: int,
     if not(collec.done(order)):
         collec.add(order)
 
-    lu,piv = collec.order_dict[order].lu, collec.order_dict[order].piv
+    r = collec.order_dict[order].r_truncated
     q = collec.order_dict[order].q
-    y = sp.linalg.lu_solve((lu,piv), q.T @ mono)
+    y,_ = sp.linalg.lapack.dtrtrs(r, q.T @ mono)
     if residual:
         M,N = collec.order_dict[order].matrice.shape
         x = np.zeros(N, dtype = 'float')

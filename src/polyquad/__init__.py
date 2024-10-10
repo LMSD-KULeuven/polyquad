@@ -17,9 +17,10 @@ keywords: polytopal domains, polygon, polyhedron, quadrature, numerical integrat
 Developped and maintained by christophe and thijs
 """
 
-from ._mapping import map_to_local_bb
+from ._mapping import map_to_local_bb_2d, map_to_local_bb_3d
 from ._antonietti import integrateMonomialsPolygon, integrateMonomialsPolyhedron
-from ._moment_matching import moment_matching
-from ._main import get_quadrature
+from ._moment_matching_3d import moment_matching as mm3d
+from ._moment_matching_2d import moment_matching as mm2d
+from ._main import get_quadrature_2d, get_quadrature_3d
 
 __all__ = ['map_to_local_bb', 'moment_matching', 'integrateMonomialsPolygon', 'integrateMonomialsPolyhedron', 'get_quadrature']

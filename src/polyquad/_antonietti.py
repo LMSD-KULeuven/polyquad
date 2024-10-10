@@ -340,10 +340,7 @@ def integrateMonomialsPolygon(order: int,
 @numba.jit(nopython = True, cache = True, nogil = True)
 def delegate(order,dim,faces,verts,vertexMonomials):
     integral = np.zeros(int(numberOfMonomials(3, order)), dtype = 'float')
-    # for ii in range(faces.shape[0]):
-    #     face = faces[ii]
     for face in faces:
-        # print(face)
         faceIntegral,faceDist = integrateMonomialsFace(3, order,face, verts, vertexMonomials)
         integral += faceDist * faceIntegral
 
@@ -358,7 +355,7 @@ def delegate(order,dim,faces,verts,vertexMonomials):
 def integrateMonomialsPolyhedron(order: int,
                                  faces: list,
                                  verts: np.ndarray):
-    """computes the integral of all monomials of the bi-variate poylnomial space of order order on a polyhedron
+    """computes the integral of all monomials of the tri-variate poylnomial space of order order on a polyhedron
 
     Parameters
     ----------
