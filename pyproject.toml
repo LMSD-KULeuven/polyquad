@@ -6,13 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "polyquad"
 version = "0.1"
 authors = [
-  { name="christophe langlois", email="christophe.langlois@kuleuven.be" },
+  { email="christophe.langlois@kuleuven.be" },
+  { name="christophe langlois"},
   { name="thijs van putten"},
   { name="hadrien beriot"},
   { name="elke deckers"}
 ]
 maintainers = [
-  {name = "christophe langlois", email = "christophe.langlois@kuleuven.be"}
+  {name = "christophe langlois"},
+  {email = "christophe.langlois@kuleuven.be"}
 ]
 description = "Frugal generation of quadrature for polytopal domain"
 readme = "README.md"
