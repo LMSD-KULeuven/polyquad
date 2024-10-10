@@ -313,7 +313,9 @@ def integrateMonomialsFace(dim: int,
 def integrateMonomialsPolygon(order: int,
                               face: np.ndarray,
                               verts: np.ndarray) -> np.ndarray:
-    """computes the integral of all monomials of the bi-variate poylnomial space of order order on a poylgon
+    """computes the analytical integral of all monomials of the bi-variate poylnomial space of order order on a poylgon using Antonietti's algorithm
+
+    IMPORTANT: assumes that points have already been mapped to the local bounding box. You can use /map_to_local_bb_2d/ for that.
 
     So far, there is no support for faces with holes, I yet have to come up with an idea to do it efficiently in python, sorry
     
@@ -354,8 +356,10 @@ def delegate(order,dim,faces,verts,vertexMonomials):
 
 def integrateMonomialsPolyhedron(order: int,
                                  faces: list,
-                                 verts: np.ndarray):
-    """computes the integral of all monomials of the tri-variate poylnomial space of order order on a polyhedron
+                                 verts: np.ndarray) -> np.ndarray:
+    """computes the anlytical integral of all monomials of the tri-variate poylnomial space of order order on a polyhedron  using Antonietti's algorithm
+
+    IMPORTANT: assumes that points have already been mapped to the local bounding box. You can use /map_to_local_bb_3d/ for that.
 
     Parameters
     ----------
@@ -393,43 +397,3 @@ if __name__=='__main__':
         index_mono = getMonomialIndex(2,80,mono[0],mono[1],0)
         if abs(ref[ii]-I[index_mono])>1e-9:
             print(f'error too large on monomial {mono}')
-    # #p2
-    # face = np.array((0,1,2,3,4))
-    # verts = np.array([[-2/3.,5/9,1,-5/9,-1],
-    #                   [-.789473684210526,-1,-.052631578947368,1,-.157894736842105],
-    #                   [0,0,0,0,0]]).T
-    # I = integrateMonomialsPolygon(10, face, verts)
-    
-    # i = getMonomialIndex(2, 10, 5, 5, 0)
-    # print(I[i])
-
-    #p3
-    # face = np.arange(0,15)
-    # verts = np.array([[0.4130485221416620,.781696234443715,0],
-    #                   [.0248797976555330,.415324992429711,0],
-    #                   [- 0.0827996918235240,.688810136531751,0],
-    #                   [- 0.5331914227793281,1.000000000000000,0],
-    #                   [- 0.5535736058529990,.580958514816226,0],
-    #                   [- 0.9724329402127670,.734117068746903,0],
-    #                   [- 1.0000000000000000,.238078507228890,0],
-    #                   [- 0.7899861791479200,.012425068086110,0],
-    #                   [- 0.627452906935866,- 0.636532897516109,0],
-    #                   [- 0.452662174765764,- 1.000000000000000,0],
-    #                   [- 0.069106265580153,- 0.289054989277619,0],
-    #                   [0.141448047807069,- 0.464417038155806,0],
-    #                   [1.000000000000000,- 0.245698820584615,0],
-    #                   [0.363704451489016,- 0.134079689960635,0],
-    #                   [0.627086024018283,- 0.110940423607648,0]])
-    # t1 = time.perf_counter()
-    # I = integrateMonomialsPolygon(30, face, verts)
-    # t2 = time.perf_counter()
-    # i = getMonomialIndex(2, 30, 5, 5, 0)
-    # print(f'elapsed time {t2-t1}s')
-    # print(I[i])        
-
-    # t1 = time.perf_counter()
-    # I = integrateMonomialsPolygon(30, face, verts)
-    # t2 = time.perf_counter()
-    # i = getMonomialIndex(2, 30, 5, 5, 0)
-    # print(f'elapsed time {t2-t1}s')
-    # print(I[i])

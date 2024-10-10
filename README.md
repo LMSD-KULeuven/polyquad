@@ -4,12 +4,12 @@ Frugal generation of quadrature for polytopal domains
 
 About
 -----
-polyquad is a tool that generates quadratures (or cubatures) for
-polytopal domains. Important points:
+polyquad is a tool that generates quadratures (or cubatures) for non
+necessarily convex polytopal domains. Important points:
 - the distribution of points is shape independent
 - the number of integration points depends **only** on the polynomial
   order of the integrand
-- expensive operations (QR decomposition) is done only once per
+- expensive operations (QR decomposition) are done only once per
   polynomial order, their results are reused from one shape to the
   other
 - integration points are defined on a bounding box encapsulating the
@@ -21,9 +21,9 @@ polytopal domains. Important points:
 
 The package is deployed on pypi, so it can be installed simply using pip
 
-'''
+`
 pip install polyquad
-'''
+`
 
 ## Usage
 For a basic usage you have at your disposal 2 functions:
@@ -40,11 +40,7 @@ over a 2d polygon. Let us tackle the case of a simple pentagon:
 We first need to declare the coordinates of vertices
 
 `
-verts = np.array((1,-1),
-                 (-1,0),
-				 (0,3),
-				 (2,3),
-				 (3,0))
+verts = np.array(((1,-1), (-1,0), (0,3), (2,3), (3,0)))
 `
 
 Then we need to specify the ordering of vertices, which is quite
@@ -63,7 +59,7 @@ points, weights = polyquad.get_quadrature_2d(k, verts, face)
 ### `polyquad.get_quadrature_3d`
 This one is for polyhedra. The only difference lies the declaration of
 faces. For sake of simplicity we here give the example of a simple
-pyramid (this library is intend to be used with way more complex
+pyramid (this library is intended to be used with way more complex
 polyhedra)
 
 Again we first declare the coordinates of vertices

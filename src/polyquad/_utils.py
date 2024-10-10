@@ -1,40 +1,6 @@
 import numpy as np
 import numba
 
-# #@numba.jit(nopython = True, cache = True, nogil = True)
-# def powers2d(order:int) -> np.ndarray:
-#     jj = np.arange(0, order+1, dtype = 'int32')
-#     v1,v2 = np.meshgrid(jj,jj)
-#     # restrict to complete polynomial basis
-#     mask = v1+v2 < order+1
-#     yPow, xPow = v1[mask], v2[mask]
-#     return xPow, yPow
-
-# #@numba.jit(nopython = True, cache = True, nogil = True)
-# def powers3d(order: int) -> (np.ndarray):
-#     """combination of powers of monomials for a polynomial of a given order with complete basis
-
-#     Parameters
-#     ----------
-#     order : int
-#         polynomial order
-
-#     Returns
-#     -------
-#     xPow np.ndarray
-#         powers for x
-#     yPow np.ndarray
-#         powers for y
-#     zPow np.ndarray
-#         powers for z
-#     """
-#     jj = np.arange(0,order+1, dtype = 'int32')
-#     v1,v2,v3 = np.meshgrid(jj,jj,jj)
-#     mask = v1+v2+v3 < order+1
-#     yPow, xPow, zPow = v1[mask], v2[mask], v3[mask]
-#     return xPow, yPow,zPow
-
-
 def trios(order: int) -> (np.ndarray):
     """combination of powers of monomials for a polynomial of a given order with complete basis
 
@@ -57,6 +23,28 @@ def trios(order: int) -> (np.ndarray):
     mask = v1+v2+v3 < order+1
     yPow, xPow, zPow = v1[mask], v2[mask], v3[mask]
     return xPow.reshape((xPow.size,1)), yPow.reshape((yPow.size,1)),zPow.reshape((zPow.size,1))
+
+def duos(order: int) -> (np.ndarray):
+    """combination of powers of monomials for a polynomial of a given order with complete basis
+
+    Parameters
+    ----------
+    order : int
+        polynomial order
+
+    Returns
+    -------
+    xPow np.ndarray
+        powers for x
+    yPow np.ndarray
+        powers for y
+    """
+    jj = np.arange(0,order+1, dtype = 'int32')
+    v1,v2 = np.meshgrid(jj,jj)
+    mask = v1+v2 < order+1
+    xPow, yPow = v1[mask], v2[mask]
+    return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1))
+
 
 @numba.jit(nopython = True, cache = True, nogil = True)
 def getFaceNormal(face: np.ndarray,

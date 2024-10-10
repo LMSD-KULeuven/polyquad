@@ -1,6 +1,8 @@
 import numpy as np
 import scipy as sp
 
+from ._utils import trios
+
 class VandermondeCollection:
     def __init__(self):
         self.order_dict = {}
@@ -31,29 +33,6 @@ class Vandermonde:
         self.pts_truncated = self.pts[p[:M],:]
 
 collec = VandermondeCollection()
-
-def trios(order: int) -> (np.ndarray):
-    """combination of powers of monomials for a polynomial of a given order with complete basis
-
-    Parameters
-    ----------
-    order : int
-        polynomial order
-
-    Returns
-    -------
-    xPow np.ndarray
-        powers for x
-    yPow np.ndarray
-        powers for y
-    zPow np.ndarray
-        powers for z
-    """
-    jj = np.arange(0,order+1, dtype = 'int32')
-    v1,v2,v3 = np.meshgrid(jj,jj,jj)
-    mask = v1+v2+v3 < order+1
-    xPow, yPow, zPow = v1[mask], v2[mask], v3[mask]
-    return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1)),zPow.reshape((zPow.size,1))
 
 def moment_matching(order: int,
                     mono: np.ndarray,

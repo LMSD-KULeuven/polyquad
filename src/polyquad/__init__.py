@@ -1,4 +1,5 @@
 """
+
               __                       __
    ___  ___  / /_ _____ ___ _____ ____/ /
   / _ \/ _ \/ / // / _ `/ // / _ `/ _  / 
@@ -23,4 +24,4 @@ from ._moment_matching_3d import moment_matching as mm3d
 from ._moment_matching_2d import moment_matching as mm2d
 from ._main import get_quadrature_2d, get_quadrature_3d
 
-__all__ = ['map_to_local_bb', 'moment_matching', 'integrateMonomialsPolygon', 'integrateMonomialsPolyhedron', 'get_quadrature']
+__all__ = ['get_quadrature_2d', 'get_quadrature_3d','map_to_local_bb_2d', 'map_to_local_bb_3d', 'mm2d', 'mm3d', 'integrateMonomialsPolygon', 'integrateMonomialsPolyhedron']

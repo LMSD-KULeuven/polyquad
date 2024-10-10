@@ -1,6 +1,8 @@
 import numpy as np
 import scipy as sp
 
+from ._utils import duos
+
 class VandermondeCollection:
     def __init__(self):
         self.order_dict = {}
@@ -32,26 +34,6 @@ class Vandermonde:
 
 collec = VandermondeCollection()
 
-def duos(order: int) -> (np.ndarray):
-    """combination of powers of monomials for a polynomial of a given order with complete basis
-
-    Parameters
-    ----------
-    order : int
-        polynomial order
-
-    Returns
-    -------
-    xPow np.ndarray
-        powers for x
-    yPow np.ndarray
-        powers for y
-    """
-    jj = np.arange(0,order+1, dtype = 'int32')
-    v1,v2 = np.meshgrid(jj,jj)
-    mask = v1+v2 < order+1
-    xPow, yPow = v1[mask], v2[mask]
-    return yPow.reshape((yPow.size,1)), xPow.reshape((xPow.size,1))
 
 def moment_matching(order: int,
                     mono: np.ndarray,
