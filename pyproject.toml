@@ -7,7 +7,7 @@ name = "polyquad"
 version = "0.1"
 authors = [
   { name="christophe langlois", email="christophe.langlois@kuleuven.be" },
-  { name="thijs van putter"},
+  { name="thijs van putten"},
   { name="hadrien beriot"},
   { name="elke deckers"}
 ]
