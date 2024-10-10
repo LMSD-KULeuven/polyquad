@@ -76,7 +76,7 @@ Then we need to declare each planar face. A planar face is defined by
 the list of the index of vertices comprising it. For example the
 square base of the pyramid contains the four first vertices defined
 above, so it is defined as : `[0,1,2,3]`
-This is done for each face and gathered in a list of list as follow:
+This is done for each face and gathered in a list of list as follows:
 
 `
 faces = [[0,1,2,3],
