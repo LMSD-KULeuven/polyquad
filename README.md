@@ -21,9 +21,9 @@ necessarily convex polytopal domains. Important points:
 
 The package is deployed on pypi, so it can be installed simply using pip
 
-`
+```
 pip install polyquad
-`
+```
 
 ## Usage
 For a basic usage you have at your disposal 2 functions:
@@ -39,22 +39,22 @@ over a 2d polygon. Let us tackle the case of a simple pentagon:
 
 We first need to declare the coordinates of vertices
 
-`
+```
 verts = np.array(((1,-1), (-1,0), (0,3), (2,3), (3,0)))
-`
+```
 
 Then we need to specify the ordering of vertices, which is quite
 straightforward in that case
 
-`
+```
 face = np.array((0,1,2,3,4))
-`
+```
 
 Then, getting the quadrature for a polynomial order `k` is as simple as
 
-`
+```
 points, weights = polyquad.get_quadrature_2d(k, verts, face)
-`
+```
 
 ### `polyquad.get_quadrature_3d`
 This one is for polyhedra. The only difference lies the declaration of
@@ -64,13 +64,13 @@ polyhedra)
 
 Again we first declare the coordinates of vertices
 
-`
+```
 verts = np.array(((0,   0, 0),
                   (1,   0, 0),
                   (1,   1, 0),
                   (0,   1, 0),
                   (.5, .5, 1)))
-`
+```
 
 Then we need to declare each planar face. A planar face is defined by
 the list of the index of vertices comprising it. For example the
@@ -78,13 +78,13 @@ square base of the pyramid contains the four first vertices defined
 above, so it is defined as : `[0,1,2,3]`
 This is done for each face and gathered in a list of list as follows:
 
-`
+```
 faces = [[0,1,2,3],
          [0,1,4],
          [1,2,4],
          [2,3,4],
          [3,0,4]]
-`
+```
 
 **Note**: if the faces of the polyhedron all have the same number of
 vertices then `faces` can be casted to a `np.array` of shape (number of
