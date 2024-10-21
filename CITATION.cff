@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "if you use this package, please cite it as below"
+authors:
+- family-names: "Langlois"
+  given-names: "Christophe"
+  orcid: "https://orcid.org/0000-0001-8058-9430"
+- family-names: "van Putten"
+  given-names: "Thijs"
+- family-names: "Beriot"
+  given-names: "Hadrien"
+  orcid: "https://orcid.org/0000-0001-7370-8905"
+- family-names: "Deckers"
+  given-names: "Elke"
+  orcid: "https://orcid.org/0000-0003-3462-5343"
+title: "polyquad"
+preferred-citation:
+  type: article
+  authors:
+- family-names: "Langlois"
+  given-names: "Christophe"
+  orcid: "https://orcid.org/0000-0001-8058-9430"
+- family-names: "van Putten"
+  given-names: "Thijs"
+- family-names: "Beriot"
+  given-names: "Hadrien"
+  orcid: "https://orcid.org/0000-0001-7370-8905"
+- family-names: "Deckers"
+  given-names: "Elke"
+  orcid: "https://orcid.org/0000-0003-3462-5343"
+  doi: "10.0000/00000"
+  journal: "Engineering with computers"
+  month: 9
+  start: 1 # First page number
+  end: 10 # Last page number
+  title: "Frugal generation of quadrature for polytopal domains"
+  issue: 1
+  volume: 1
+  year: 2024
