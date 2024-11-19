@@ -97,8 +97,11 @@ If you use this code for you work, you are kindly invited to cite the
 associated paper
 ```
 @article{langlois2024,
-	title: {Frugal numerical integration scheme for polytopal domains},
-	author: {Langlois,C. and van Putten,T. and B\'eriot,H. and Deckers,E.}
+	title= {Frugal numerical integration scheme for polytopal domains},
+	author= {Langlois,C. and van Putten,T. and B\'eriot,H. and Deckers,E.},
+	journal= {Engineering with computers},
+	doi={https://doi.org/10.1007/s00366-024-02080-1},
+	url = {https://link.springer.com/article/10.1007/s00366-024-02080-1}
 	}
 ```
 
