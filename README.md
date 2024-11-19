@@ -25,6 +25,10 @@ The package is deployed on pypi, so it can be installed simply using pip
 pip install polyquad
 ```
 
+*Note:* this package depends on `numba`. It seems that, at the moment,
+it's not compatible with the latest python (3.13). Therefore you may
+need to revert to an older python for a while.
+
 ## Usage
 For a basic usage you have at your disposal 2 functions:
 - `polyquad.get_quadrature_2d`
