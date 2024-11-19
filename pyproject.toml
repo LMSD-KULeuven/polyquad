@@ -26,6 +26,8 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 keywords = ["quadrature", "cubature", "integration", "scheme", "polygon", "polyhedron", "polytope", "polytopal", "polytopic"]
+dependencies = ["numpy", "scipy", "numba"]
+
 
 [project.urls]
 Homepage = "https://github.com/LMSD-KULeuven/polyquad"
