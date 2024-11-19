@@ -27,12 +27,7 @@ preferred-citation:
 - family-names: "Deckers"
   given-names: "Elke"
   orcid: "https://orcid.org/0000-0003-3462-5343"
-  doi: "10.0000/00000"
+  doi: "10.1007/s00366-024-02080-1"
   journal: "Engineering with computers"
-  month: 9
-  start: 1 # First page number
-  end: 10 # Last page number
   title: "Frugal generation of quadrature for polytopal domains"
-  issue: 1
-  volume: 1
   year: 2024
