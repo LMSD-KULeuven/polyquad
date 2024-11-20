@@ -2,6 +2,8 @@ polyquad
 ========
 Frugal generation of quadrature for polytopal domains
 
+Python package associated with [this paper](https://link.springer.com/article/10.1007/s00366-024-02080-1).
+
 About
 -----
 polyquad is a tool that generates quadratures (or cubatures) for non
