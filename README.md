@@ -8,14 +8,14 @@ About
 -----
 polyquad is a tool that generates quadratures (or cubatures) for non
 necessarily convex polytopal domains. Important points:
-- the distribution of points is shape independent
+- the distribution of points is **shape independent**
 - the number of integration points depends **only** on the polynomial
   order of the integrand
-- expensive operations (QR decomposition) are done only once per
-  polynomial order, their results are reused from one shape to the
+- expensive operations (QR decomposition) are done **only once per
+  polynomial order**, their results are reused from one shape to the
   other
 - integration points are defined on a bounding box encapsulating the
-  polytope (and can thus fall outside of the polytope), so the
+  polytope (and can thus **fall outside of the polytope**), so the
   integrand should be defined there as well.
 
 
