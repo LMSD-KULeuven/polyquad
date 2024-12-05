@@ -2,6 +2,7 @@ import numpy as np
 
 from ._mapping import map_to_local_bb_2d, map_to_local_bb_3d
 from ._antonietti import integrateMonomialsPolyhedron
+from ._antonietti import integrateMonomialsPolygon
 from ._moment_matching_2d import moment_matching as mm2d
 from ._moment_matching_3d import moment_matching as mm3d
 
@@ -30,10 +31,10 @@ def get_quadrature_2d(order:int,
         points, weights
 
     """
-    # perform matrix transfomation to fit in the local bounding box = [-1, 1]^3
+    # perform matrix transfomation to fit in the local bounding box = [-1, 1]^2
     verts, jacobian = map_to_local_bb_2d(vertices)
     # call antonietti's algorithm
-    integrated_monomials = integrateMonomialsPolygon(order, face, verts)
+    integrated_monomials = integrateMonomialsPolygon(order, face, np.pad(verts,((0,0),(0,1))))
     # perform moment matching
     if get_residual:
         points, weights, resiadual = mm2d(order, integrated_monomials, residual = True)

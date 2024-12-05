@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "polyquad"
-version = "1.1"
+version = "1.2"
 authors = [
   { email="christophe.langlois@kuleuven.be" },
   { name="christophe langlois"},
@@ -18,7 +18,7 @@ maintainers = [
 ]
 description = "Frugal generation of quadrature for polytopal domain"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = "<3.13"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

@@ -19,7 +19,7 @@ class Vandermonde:
         jj,_ = sp.special.roots_legendre(order+1)
         X,Y = np.meshgrid(jj,jj)
         x,y = X.flatten(), Y.flatten()
-        x,y = x[np.newaxis],y[np.newaxis],z[np.newaxis]
+        x,y = x[np.newaxis],y[np.newaxis]#,z[np.newaxis]
         xpow,ypow = duos(order)
         vt = x**xpow * y**ypow
         self.matrice = vt
