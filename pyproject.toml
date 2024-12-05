@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "polyquad"
-version = "1.2"
+version = "1.2.2"
 authors = [
   { email="christophe.langlois@kuleuven.be" },
   { name="christophe langlois"},
@@ -26,7 +26,7 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 keywords = ["quadrature", "cubature", "integration", "scheme", "polygon", "polyhedron", "polytope", "polytopal", "polytopic"]
-dependencies = ["numpy", "scipy", "numba"]
+dependencies = ["numpy<=1.16", "scipy", "numba"]
 
 
 [project.urls]

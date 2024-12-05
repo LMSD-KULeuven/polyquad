@@ -1,7 +1,5 @@
 import numpy as np
 
-
-
 import polyquad
 
 if __name__=='__main__':
