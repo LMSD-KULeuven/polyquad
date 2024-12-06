@@ -74,13 +74,15 @@ def get_quadrature_3d(order:int,
 
     """
     # perform matrix transfomation to fit in the local bounding box = [-1, 1]^3
-    verts, jacobian = map_to_local_bb_3d(vertices)
+    verts, jacobian, transfo = map_to_local_bb_3d(vertices)
+    print(verts)
     # call antonietti's algorithm
     integrated_monomials = integrateMonomialsPolyhedron(order, faces, verts)
     # perform moment matching
     if get_residual:
         points, weights, resiadual = mm3d(order, integrated_monomials, residual = True)
-        weights = weights*jacobian
+        weights = weights/jacobian
+        points = (points + transfo[1]) @ np.linalg.inv(transfo[0])
         return points, weights, resiadual
     else:
         points, weights = mm3d(order, integrated_monomials, residual = False)
