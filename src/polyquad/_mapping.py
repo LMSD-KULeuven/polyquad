@@ -26,8 +26,8 @@ def map_to_local_bb_2d(verts: np.ndarray) -> (np.ndarray, float):
     translate = np.min(v, axis = 0) + 1
     v -= translate
     #jacobian
-    j = dx * dy
-    return v, j
+    j = np.linalg.det(S)
+    return v, j, [S,translate]
 
 def map_to_local_bb_3d(verts: np.ndarray) -> (np.ndarray, float):
     """map the element to the reference bounding box and computes the jacobian
