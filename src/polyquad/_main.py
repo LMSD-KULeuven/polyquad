@@ -88,7 +88,6 @@ def get_quadrature_3d(order:int,
     """
     # perform matrix transfomation to fit in the local bounding box = [-1, 1]^3
     verts, jacobian, transfo = map_to_local_bb_3d(vertices)
-    print(verts)
     # call antonietti's algorithm
     integrated_monomials = integrateMonomialsPolyhedron(order, faces, verts)
     # perform moment matching
