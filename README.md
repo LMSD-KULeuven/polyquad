@@ -37,7 +37,21 @@ For a basic usage you have at your disposal 2 functions:
 - `polyquad.get_quadrature_3d`
 
 These should behave nicely as long as you feed them the right data
-structures. Let us explain them here
+structures. We will explain these just after. Before we need to talk
+about mapping.
+
+### Mapping
+Both `polyquad.get_quadrature_2d` and `polyquad.get_quadrature_3d`
+come with an argument `mapping` which should be either True or False
+(False is default).
+
+I you use this library, chances are you already have a `bounding box`
+concept in your code, thus your polytope is probably already lying in
+its bounding box if so put `mapping = False` (or don't specify
+anything as False is the default value) to avoid useless mappings.
+
+On the contrary maybe you polytope isn't already in the reference
+bounding box, in that case you should specify `mapping = True`.
 
 ### `polyquad.get_quadrature_2d`
 As the name suggests, the function should be used to get quadratures
@@ -59,7 +73,7 @@ face = np.array((0,1,2,3,4))
 Then, getting the quadrature for a polynomial order `k` is as simple as
 
 ```
-points, weights = polyquad.get_quadrature_2d(k, verts, face)
+points, weights = polyquad.get_quadrature_2d(k, verts, face, mapping = True)
 ```
 
 ### `polyquad.get_quadrature_3d`
