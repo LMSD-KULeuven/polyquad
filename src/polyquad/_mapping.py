@@ -57,5 +57,5 @@ def map_to_local_bb_3d(verts: np.ndarray) -> (np.ndarray, float):
     translate = np.min(v, axis = 0) + 1
     v -= translate
     #jacobian
-    j = dx * dy * dz
+    j = 1/np.prod(np.diag(S))#dx * dy * dz
     return v, j
