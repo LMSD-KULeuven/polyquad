@@ -36,7 +36,11 @@ def get_quadrature_2d(order:int,
 
     """
     # perform matrix transfomation to fit in the local bounding box = [-1, 1]^2
-    verts, jacobian, transfo = map_to_local_bb_2d(vertices)
+    if mapping:
+        verts, jacobian, transfo = map_to_local_bb_2d(vertices)
+    else:
+        verts = vertices
+        jacobian = 1
     # call antonietti's algorithm
     tmp = np.pad(verts,((0,0),(0,1)))
     integrated_monomials = integrateMonomialsPolygon(order, face, tmp)

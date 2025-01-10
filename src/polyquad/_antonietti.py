@@ -2,7 +2,7 @@
 Implementation of Paola Antonietti's algorithm 2
 https://doi.org/10.1007/s10915-018-0802-y
 
-Hats off to Thijs van Putten coding it in the first place.
+Hats off to Thijs van Putten for coding it in the first place.
 """
 
 import numpy as np
@@ -146,7 +146,8 @@ def getEdgeGeo(verts: np.ndarray,
     vertsDistance[1] =  vertNormal @ (verts[1,:] - edgeCenter).T
     return edgeCenter, edgeDistance, vertsDistance
 
-@numba.jit(nopython = True, cache = True, nogil = True)
+#@numba.jit(nopython = True, cache = True, nogil = True) # for some reason caching crashes
+@numba.jit(nopython = True, nogil = True)
 def getMonomialIndex(dim:int,
                      order:int,
                      i:int,
@@ -190,7 +191,7 @@ def getMonomialIndex(dim:int,
     ii+=k
     return int(ii)
 
-@numba.jit(nopython = True, cache = True, nogil = True)
+@numba.jit(nopython = True, nogil = True)
 def applyStokes(integral: np.ndarray,
                 dim:int,
                 order: int,
@@ -221,7 +222,7 @@ def applyStokes(integral: np.ndarray,
                     ii+=1
 
 
-@numba.jit(nopython = True, cache = True, nogil = True)
+@numba.jit(nopython = True, nogil = True)
 def integrateMonomialsEdge(dim: float,
                            order:float,
                            vertsPair:np.ndarray,
@@ -259,7 +260,7 @@ def integrateMonomialsEdge(dim: float,
     applyStokes(integral, dim, order, edgeCenter, 1)
     return integral
 
-@numba.jit(nopython = True, cache = True, nogil = True)
+@numba.jit(nopython = True, nogil = True)
 def integrateMonomialsFace(dim: int,
                            order:int,
                            face: np.ndarray,

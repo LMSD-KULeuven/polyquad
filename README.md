@@ -50,7 +50,7 @@ concept in your code, thus your polytope is probably already lying in
 its bounding box if so put `mapping = False` (or don't specify
 anything as False is the default value) to avoid useless mappings.
 
-On the contrary maybe you polytope isn't already in the reference
+On the contrary maybe your polytope isn't already in the reference
 bounding box, in that case you should specify `mapping = True`.
 
 ### `polyquad.get_quadrature_2d`
